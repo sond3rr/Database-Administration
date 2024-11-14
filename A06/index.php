@@ -3,19 +3,29 @@ include("connect.php");
 
 $successMsg = '';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['addUser'])) {
   $firstName = $_POST["firstName"];
   $lastName = $_POST["lastName"];
   $birthDay = $_POST["birthDay"];
 
-  $insert = "INSERT INTO userInfo (firstName, lastName, birthDay) VALUES ('$firstName', '$lastName', '$birthDay')";
 
+  $insert = "INSERT INTO userInfo (firstName, lastName, birthDay, isDeleted) VALUES ('$firstName', '$lastName', '$birthDay', 'no')";
   if (executeQuery($insert)) {
     $successMsg = "User successfully added!";
   }
 }
 
-$query = "SELECT * FROM userInfo";
+if (isset($_POST['deleteUserId'])) {
+  $deleteId = $_POST['deleteUserId'];
+  $softDelete = "UPDATE userInfo SET isDeleted='yes' WHERE userInfoID=$deleteId";
+  if (executeQuery($softDelete)) {
+    $successMsg = "User deleted.";
+  }
+}
+
+$query = "SELECT * FROM userInfo WHERE isDeleted='no'";
 $result = executeQuery($query);
 ?>
 
@@ -58,6 +68,11 @@ $result = executeQuery($query);
       color: green;
       margin-top: 15px;
     }
+
+    .error-message {
+      color: red;
+      margin-top: 15px;
+    }
   </style>
 </head>
 
@@ -65,6 +80,7 @@ $result = executeQuery($query);
   <div class="container-fluid mb-5 p-3 d-flex align-items-center" style="background-color: #1c1c1c; color: white">
     <img src="man.png" style="width: 50px; height: auto; margin-right: 15px;">
   </div>
+
 
   <div class="container border-container mb-5">
     <div class="col-lg-8 center-container">
@@ -82,20 +98,21 @@ $result = executeQuery($query);
           <label for="birthDay" class="form-label">Birthday</label>
           <input type="date" class="form-control" id="birthDay" name="birthDay" required>
         </div>
-        <button type="submit" class="btn btn-secondary" style="background-color: #1c1c1c">Add User</button>
+        <button type="submit" class="btn btn-secondary" style="background-color: #1c1c1c" name="addUser">Add User</button>
       </form>
 
+    </div>
+  </div>
+
+
+  <div class="container border-container">
+    <div class="col-lg-8 center-container">
+      <h2 class="text-center">User List</h2>
       <?php
       if ($successMsg) {
         echo "<p class='success-message'>$successMsg</p>";
       }
       ?>
-    </div>
-  </div>
-
-  <div class="container border-container">
-    <div class="col-lg-8 center-container">
-      <h2 class="text-center">User List</h2>
       <div class="row">
         <?php
         if (mysqli_num_rows($result)) {
@@ -107,12 +124,16 @@ $result = executeQuery($query);
                   <img src="user.png" alt="User Logo" class="logo-img">
                   <div>
                     <h5 class="card-title mb-1">
-                      <?php echo ($user["firstName"]) . " " . ($user["lastName"]); ?>
+                      <?php echo htmlspecialchars($user["firstName"]) . " " . htmlspecialchars($user["lastName"]); ?>
                     </h5>
                     <p class="card-text mb-0" style="color: #716868">
-                      <?php echo ($user["birthDay"]); ?>
+                      <?php echo htmlspecialchars($user["birthDay"]); ?>
                     </p>
                   </div>
+                  <form method="POST" action="" class="ms-auto mb-0">
+                    <input type="hidden" name="deleteUserId" value="<?php echo $user['userInfoID']; ?>">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                  </form>
                 </div>
               </div>
             </div>
@@ -120,22 +141,10 @@ $result = executeQuery($query);
           }
         }
         ?>
-      </div>
-    </div>
-  </div>
 
-  <footer class="py-3 my-4">
-    <ul class="nav justify-content-center border-bottom pb-3 mb-3">
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">Home</a></li>
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">Features</a></li>
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">Pricing</a></li>
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">FAQs</a></li>
-      <li class="nav-item"><a href="#" class="nav-link px-2 text-muted">About</a></li>
-    </ul>
-    <p class="text-center text-muted">© 2024 Company, Inc</p>
-  </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
